@@ -3,15 +3,19 @@
 #include "UIMgr.h"
 #include "UIEditor.h"
 #include "UITip.h"
+#include "PaymentMgr.h"
+#include "BaseFunc.h"
 
 USING_NS_CC;
 
 HelloWorld::HelloWorld()
 {
+	PaymentMgr::GetInstance()->AddObserver(this);
 }
 
 HelloWorld::~HelloWorld()
 {
+	PaymentMgr::GetInstance()->DelObserver(this);
 }
 
 
@@ -22,8 +26,84 @@ bool HelloWorld::init()
         return false;
     }
 
-    this->AddConfigNode("BtnTest");
+    m_pQuerySkuDetail = this->AddConfigMenuItem("BtnQueryItem", menu_selector(HelloWorld::OnBtnQueryItem));
     return true;
+}
+
+void HelloWorld::OnBtnQueryItem(CCObject* pObj)
+{
+	m_pQuerySkuDetail->setEnabled(false);
+	PaymentMgr::GetInstance()->ReqItemInfo();
+}
+
+void HelloWorld::OnNotify( int nEvent, int nParam )
+{
+	switch (nEvent)
+	{
+	case PAY_EVENT_QUERY_SKU_FIN:
+		{
+			auto& vecItemInfo = PaymentMgr::GetInstance()->GetItemInfo();
+			const int SPACE_Y = 100;
+			CCPoint ptOffset;
+			for (auto& rItem : vecItemInfo) {
+				auto* pNode = this->AddConfigMenuItem("BtnPay", menu_selector(HelloWorld::OnBtnPay));
+				if (NULL == pNode) {
+					continue;
+				}
+
+				std::string strName = "@";
+				const char* STATIC_TEST_PREFIX = "android.test.";
+				auto pPos = strstr(rItem.m_strTypeId.c_str(), STATIC_TEST_PREFIX);
+				if (pPos) {
+					strName += rItem.m_strTypeId;
+					ReplaceStdString(strName, STATIC_TEST_PREFIX, "");
+				} else {
+					strName += rItem.m_strName;	
+				}
+
+				strName += " -l";
+				UIMgr::GetInstance()->AddConfigStateChild(pNode, strName.c_str());
+
+				std::string strPrice = "@";
+				strPrice += rItem.m_strPrice;
+				strPrice += " -r";
+				UIMgr::GetInstance()->AddConfigStateChild(pNode, strPrice.c_str());
+
+				auto* pStrSku = CCString::create(rItem.m_strTypeId);
+				pNode->setUserObject(pStrSku);
+
+				UIMgr::GetInstance()->NodePositionMove(pNode, ptOffset);
+				ptOffset.y -= SPACE_Y;
+			}
+		}
+		break;
+	default:
+		break;
+	}
+}
+
+void HelloWorld::OnBtnPay( CCObject* pObj )
+{
+	if (NULL == pObj) {
+		return;
+	}
+
+	auto pNode = dynamic_cast<CCNode*>(pObj);
+	if (NULL == pNode) {
+		return;
+	}
+
+	auto pUserObject = pNode->getUserObject();
+	if (NULL == pUserObject) {
+		return;
+	}
+
+	auto pStrTypeId = dynamic_cast<CCString*>(pUserObject);
+	if (NULL == pStrTypeId) {
+		return;
+	}
+
+	PaymentMgr::GetInstance()->PayStart(pStrTypeId->getCString());
 }
 
 void HelloWorld::menuCloseCallback(CCObject* pSender)

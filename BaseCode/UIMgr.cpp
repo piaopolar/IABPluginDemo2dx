@@ -908,8 +908,7 @@ CCNode* UIMgr::CreateConfigNode( const char *pszConfig, int *pType /*= NULL*/ ,C
 		std::string strChild = strOrg.substr(stPos + 1);
 		this->AddConfigSingleBranchChild(pNode, strChild.c_str());
 	} else if (strchr(pszConfig, '@')) {
-		const char *pPos = strchr(pszConfig, '.');
-		if (pPos) {
+		if (strstr(pszConfig, ".png") || strstr(pszConfig, ".jpg")) {
 			pNode = SpriteCreate(pszConfig + 1);
 		} else {
 			pNode = this->CreateConfigTextLabel(NULL, pszConfig + 1);

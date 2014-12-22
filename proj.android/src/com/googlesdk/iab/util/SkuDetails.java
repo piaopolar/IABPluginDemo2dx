@@ -50,6 +50,11 @@ public class SkuDetails {
     public String getPrice() { return mPrice; }
     public String getTitle() { return mTitle; }
     public String getDescription() { return mDescription; }
+    
+    public JSONObject getJson() throws JSONException {
+    	JSONObject json = new JSONObject(mJson);
+    	return json;
+    }
 
     @Override
     public String toString() {

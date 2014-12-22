@@ -7,7 +7,7 @@
 #include "SceneFactoryImpl.h"
 #include "ObserverPattern.h"
 
-class HelloWorld : public MyLayer
+class HelloWorld : public MyLayer, public Observer
 {
 public:
 	HelloWorld();
@@ -15,12 +15,19 @@ public:
 
     // Here's a difference. Method 'init' in cocos2d-x returns bool, instead of returning 'id' in cocos2d-iphone
     virtual bool init();  
+
+	virtual void OnNotify(int nEvent, int nParam);
     
     // a selector callback
     void menuCloseCallback(CCObject* pSender);
+    void OnBtnQueryItem(CCObject* pObj);
+	void OnBtnPay(CCObject* pObj);
     
     // implement the "static node()" method manually
     CREATE_FUNC(HelloWorld);
+
+private:
+	CCMenuItem* m_pQuerySkuDetail;
 };
 
 class HelloWorldScene : public MyScene
