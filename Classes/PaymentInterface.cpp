@@ -30,19 +30,24 @@ extern "C"
 		}
 	}
 
-	void Java_org_PayPlugin_GooglePlayIABPlugin_nativeOnPurchased(JNIEnv* jEnv, jobject jObj, jstring jItemKey, jstring jInfo)
+	void Java_org_PayPlugin_GooglePlayIABPlugin_nativeOnPurchased(JNIEnv* jEnv, jobject jObj, jstring jstrJsonPurchaseInfo, jstring jstrSignature)
 	{
-		const char *pszItemKey = jItemKey ? jEnv->GetStringUTFChars(jItemKey, NULL) : NULL;
-		const char *pszInfo = jInfo ? jEnv->GetStringUTFChars(jInfo, NULL) : NULL;
+		const char *pszJsonPurchaseInfo = jstrJsonPurchaseInfo ? jEnv->GetStringUTFChars(jstrJsonPurchaseInfo, NULL) : NULL;
+		const char *pszSignature = jstrSignature ? jEnv->GetStringUTFChars(jstrSignature, NULL) : NULL;
 
-		PaymentMgr::GetInstance()->OnPurchased(pszItemKey, pszInfo);
-
-		if (pszItemKey) {
-			jEnv->ReleaseStringUTFChars(jItemKey, pszItemKey);
+		auto* pJsonValue = Json_create(pszJsonPurchaseInfo);
+		if (pJsonValue) {
+			std::string strItemTypeId = Json_getString(pJsonValue, "productId", "");
+			PaymentMgr::GetInstance()->OnPurchased(strItemTypeId.c_str(), pszJsonPurchaseInfo, pszSignature);
+			Json_dispose(pJsonValue);
 		}
 
-		if (pszInfo) {
-			jEnv->ReleaseStringUTFChars(jInfo, pszInfo);
+		if (pszJsonPurchaseInfo) {
+			jEnv->ReleaseStringUTFChars(jstrJsonPurchaseInfo, pszJsonPurchaseInfo);
+		}
+
+		if (pszSignature) {
+			jEnv->ReleaseStringUTFChars(jstrSignature, pszSignature);
 		}
 	}
 
@@ -62,19 +67,24 @@ extern "C"
 		}
 	}
 
-	void Java_org_PayPlugin_GooglePlayIABPlugin_nativeOnRestore(JNIEnv* jEnv, jobject jObj, jstring jItemKey, jstring jInfo)
+	void Java_org_PayPlugin_GooglePlayIABPlugin_nativeOnRestore(JNIEnv* jEnv, jobject jObj, jstring jstrJsonPurchaseInfo, jstring jstrSignature)
 	{
-		const char *pszItemKey = jItemKey ? jEnv->GetStringUTFChars(jItemKey, NULL) : NULL;
-		const char *pszInfo = jInfo ? jEnv->GetStringUTFChars(jInfo, NULL) : NULL;
+		const char *pszJsonPurchaseInfo = jstrJsonPurchaseInfo ? jEnv->GetStringUTFChars(jstrJsonPurchaseInfo, NULL) : NULL;
+		const char *pszSignature = jstrSignature ? jEnv->GetStringUTFChars(jstrSignature, NULL) : NULL;
 
-		PaymentMgr::GetInstance()->OnRestore(pszItemKey, pszInfo);
-
-		if (pszItemKey) {
-			jEnv->ReleaseStringUTFChars(jItemKey, pszItemKey);
+		auto* pJsonValue = Json_create(pszJsonPurchaseInfo);
+		if (pJsonValue) {
+			std::string strItemTypeId = Json_getString(pJsonValue, "productId", "");
+			PaymentMgr::GetInstance()->OnRestore(strItemTypeId.c_str(), pszJsonPurchaseInfo, pszSignature);
+			Json_dispose(pJsonValue);
 		}
 
-		if (pszInfo) {
-			jEnv->ReleaseStringUTFChars(jInfo, pszInfo);
+		if (pszJsonPurchaseInfo) {
+			jEnv->ReleaseStringUTFChars(jstrJsonPurchaseInfo, pszJsonPurchaseInfo);
+		}
+
+		if (pszSignature) {
+			jEnv->ReleaseStringUTFChars(jstrSignature, pszSignature);
 		}
 	}
 };

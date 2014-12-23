@@ -81,9 +81,15 @@ bool PaymentMgr::TestVerifyMode( int nMode )
 	return (nMode & m_nVerifyMode) ? true : false;
 }
 
-void PaymentMgr::OnRestore( const char *pszItemKey, const char *pszVerifyInfo )
+void PaymentMgr::OnRestore( const char *pszItemKey, const char *pszItemInfo, const char *pszVerifyInfo )
 {
 	CCLog("PaymentMgr::OnRestore [%s] [%s]", pszItemKey, pszVerifyInfo);
+
+	if (this->TestVerifyMode(PAY_VERIFY_SERVER)) {
+		this->PayServerVerify(pszItemKey, pszVerifyInfo);
+	} else {
+		this->PayEnd(pszItemKey);
+	}
 }
 
 void PaymentMgr::PayStart( const char *pszItemTypeId )
@@ -93,7 +99,7 @@ void PaymentMgr::PayStart( const char *pszItemTypeId )
 	PaymentInterface::PayStart(pszItemTypeId);
 }
 
-void PaymentMgr::OnPurchased( const char *pszItemKey, const char *pszVerifyInfo )
+void PaymentMgr::OnPurchased( const char *pszItemKey, const char *pszItemInfo, const char *pszVerifyInfo )
 {
 	CCLog("PaymentMgr::OnPurchased [%s] [%s]", pszItemKey, pszVerifyInfo);
 
@@ -134,5 +140,6 @@ void PaymentMgr::PayEnd( const char *pszItemKey )
 {
 	CCLog("PaymentMgr::PayEnd [%s]", pszItemKey);
 
-
+	// if it a non-consumable like item and ONLY save owned status in google IAB, DONOT call it
+	PaymentInterface::PayEnd(pszItemKey);
 }

@@ -45,9 +45,9 @@ public:
 	bool TestVerifyMode(int nMode);
 	void PayStart(const char *pszItemTypeId);
 
-	void OnPurchased(const char *pszItemKey, const char *pszVerifyInfo);
+	void OnPurchased(const char *pszItemKey, const char *pszItemInfo, const char *pszVerifyInfo);
 	void OnFailed(const char* pszItemKey, const char *pszInfo);
-	void OnRestore(const char* pszItemKey, const char *pszVerifyInfo);
+	void OnRestore(const char* pszItemKey, const char *pszItemInfo, const char *pszVerifyInfo);
 	void OnServerVerifyResult(const char *pszItemKey, bool bVerifyFin);
 private:
 	PaymentMgr();

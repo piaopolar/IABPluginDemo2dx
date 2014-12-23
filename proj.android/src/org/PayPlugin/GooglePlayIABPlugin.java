@@ -30,6 +30,7 @@ public class GooglePlayIABPlugin
 	private static GooglePlayIABPlugin sInstance;
 	private Activity mActivity;
 	IabHelper mHelper;
+	Inventory mInventory;
 
     // (arbitrary) request code for the purchase flow
     static final int RC_REQUEST = 10001;	
@@ -127,6 +128,7 @@ public class GooglePlayIABPlugin
             }            
 
             Log.d(TAG, "Query inventory was successful.");
+            mInventory = inventory;
 
             /*
              * Check for items we own. Notice that for each purchase, we check
@@ -145,6 +147,10 @@ public class GooglePlayIABPlugin
             updateUi();
             setWaitScreen(false);
             Log.d(TAG, "Initial inventory query finished; enabling main UI.");
+
+    		for (Map.Entry<String,Purchase> entry : inventory.mPurchaseMap.entrySet()) {
+    			runNativeOnRestore(entry.getValue().getOriginalJson(), entry.getValue().getSignature());
+    		}
         }
     };	
 	
@@ -157,10 +163,11 @@ public class GooglePlayIABPlugin
 		});
 	}
 
-	public static void PayEnd(String strItemKey) {
+	public static void PayEnd(final String strItemKey) {
 		sInstance.mActivity.runOnUiThread(new Runnable() {
 			public void run() {
-				
+				sInstance.mHelper.consumeAsync(sInstance.mInventory.getPurchase(strItemKey), 
+						sInstance.mConsumeFinishedListener);
 			}
 		});
 	}
@@ -228,6 +235,7 @@ public class GooglePlayIABPlugin
             }
 
             Log.d(TAG, "Purchase successful.");
+            runNativeOnPurchased(purchase.getOriginalJson(), purchase.getSignature());
         }
     };
 
@@ -257,9 +265,9 @@ public class GooglePlayIABPlugin
     };	
 
 	public static native void nativeOnReceiveItemInfo(String strJsonSkuDetail);
-	public static native void nativeOnPurchased(String strItemKey, String strInfo);
+	public static native void nativeOnPurchased(String strJsonPurchaseInfo, String strSignature);
 	public static native void nativeOnFailed(String strItemKey, String strInfo);
-	public static native void nativeOnRestore(String strItemKey, String strInfo);
+	public static native void nativeOnRestore(String strJsonPurchaseInfo, String strSignature);
 
 	public static void runNativeOnReceiveItemInfo(final String strJsonSkuDetail) {
 		Cocos2dxGLSurfaceView.getInstance().queueEvent(new Runnable() {
@@ -269,10 +277,10 @@ public class GooglePlayIABPlugin
 		});
 	}
 	
-	public static void runNativeOnPurchased(final String strItemKey, final String strInfo) {
+	public static void runNativeOnPurchased(final String strJsonPurchaseInfo, final String strSignature) {
 		Cocos2dxGLSurfaceView.getInstance().queueEvent(new Runnable() {
 			public void run() {
-				nativeOnPurchased(strItemKey, strInfo);
+				nativeOnPurchased(strJsonPurchaseInfo, strSignature);
 			} 
 		});
 	}
@@ -285,10 +293,10 @@ public class GooglePlayIABPlugin
 		});
 	}
 
-	public static void runNativeOnRestore(final String strItemKey, final String strInfo) {
+	public static void runNativeOnRestore(final String strJsonPurchaseInfo, final String strSignature) {
 		Cocos2dxGLSurfaceView.getInstance().queueEvent(new Runnable() {
 			public void run() {
-				nativeOnRestore(strItemKey, strInfo);
+				nativeOnRestore(strJsonPurchaseInfo, strSignature);
 			} 
 		});
 	}
