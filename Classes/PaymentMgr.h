@@ -38,7 +38,8 @@ public:
 	static void Release(void);
 
 	void ReqItemInfo(void);	
-	const std::vector<PAY_ITEMINFO>& GetItemInfo(void) const;
+	const std::map<std::string, PAY_ITEMINFO>& GetItemInfo(void) const;
+	const PAY_ITEMINFO* GetItemInfo(const char *pszItemTypeId) const;
 	void ClearItemInfo(void);
 	void AddItemInfo(const PAY_ITEMINFO& info);
 
@@ -55,6 +56,6 @@ private:
 	void PayEnd(const char *pszItemKey);
 
 	int m_nVerifyMode;
-	std::vector<PAY_ITEMINFO> m_vecItem;
+	std::map<std::string, PAY_ITEMINFO> m_mapItem;
 };
 #endif  //__INTERFACE_FACEBOOK_H__

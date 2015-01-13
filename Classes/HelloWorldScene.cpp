@@ -42,14 +42,16 @@ void HelloWorld::OnNotify( int nEvent, int nParam )
 	{
 	case PAY_EVENT_QUERY_SKU_FIN:
 		{
-			auto& vecItemInfo = PaymentMgr::GetInstance()->GetItemInfo();
+			auto& mapItemInfo = PaymentMgr::GetInstance()->GetItemInfo();
 			const int SPACE_Y = 100;
 			CCPoint ptOffset;
-			for (auto& rItem : vecItemInfo) {
+			for (auto& rPair : mapItemInfo) {
 				auto* pNode = this->AddConfigMenuItem("BtnPay", menu_selector(HelloWorld::OnBtnPay));
 				if (NULL == pNode) {
 					continue;
 				}
+
+				auto& rItem = rPair.second;
 
 				std::string strName = "@";
 				const char* STATIC_TEST_PREFIX = "android.test.";

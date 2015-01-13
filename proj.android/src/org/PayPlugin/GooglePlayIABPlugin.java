@@ -30,7 +30,7 @@ public class GooglePlayIABPlugin
 	private static GooglePlayIABPlugin sInstance;
 	private Activity mActivity;
 	IabHelper mHelper;
-	Inventory mInventory;
+	Inventory mInventory = null;
 
     // (arbitrary) request code for the purchase flow
     static final int RC_REQUEST = 10001;	
@@ -97,9 +97,14 @@ public class GooglePlayIABPlugin
 	public static void ReqItemInfo(final String strItemTypeIdSet) {
 		sInstance.mActivity.runOnUiThread(new Runnable() {
 			public void run() {
-				List lstStrTypeId = java.util.Arrays.asList(strItemTypeIdSet.split(" ")); 
-                Log.d(TAG, "Querying inventory.");
-                sInstance.mHelper.queryInventoryAsync(true, lstStrTypeId, sInstance.mGotInventoryListener);
+				List lstStrTypeId = java.util.Arrays.asList(strItemTypeIdSet.split(" "));
+				Log.d(TAG, "Querying inventory.");
+				try {
+					sInstance.mHelper.queryInventoryAsync(true, lstStrTypeId,
+							sInstance.mGotInventoryListener);
+				} catch (Exception e) {
+					Log.e(TAG, "Querying inventory Error.");
+				}
 			}
 		});
 	}
@@ -128,7 +133,9 @@ public class GooglePlayIABPlugin
             }            
 
             Log.d(TAG, "Query inventory was successful.");
-            mInventory = inventory;
+            mInventory = new Inventory();
+            mInventory.mSkuMap.putAll(inventory.mSkuMap);
+            mInventory.mPurchaseMap.putAll(inventory.mPurchaseMap);
 
             /*
              * Check for items we own. Notice that for each purchase, we check
@@ -154,11 +161,16 @@ public class GooglePlayIABPlugin
         }
     };	
 	
-	public static void PayStart(final String strItemTypeId) {
+	public static void PayStart(final String strItemTypeId, final String strExtraVerifyInfo) {
 		sInstance.mActivity.runOnUiThread(new Runnable() {
 			public void run() {
-				sInstance.mHelper.launchPurchaseFlow(sInstance.mActivity, strItemTypeId, RC_REQUEST,
-						sInstance.mPurchaseFinishedListener, "");
+				Log.d(TAG, "PayStart " + strItemTypeId);// + " Extra " + strExtraVerifyInfo);
+				try {
+					sInstance.mHelper.launchPurchaseFlow(sInstance.mActivity, strItemTypeId, RC_REQUEST,
+							sInstance.mPurchaseFinishedListener, strExtraVerifyInfo);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		});
 	}
@@ -166,8 +178,22 @@ public class GooglePlayIABPlugin
 	public static void PayEnd(final String strItemKey) {
 		sInstance.mActivity.runOnUiThread(new Runnable() {
 			public void run() {
-				sInstance.mHelper.consumeAsync(sInstance.mInventory.getPurchase(strItemKey), 
-						sInstance.mConsumeFinishedListener);
+				Log.d(TAG, "PayEnd " + strItemKey);
+				if (sInstance.mInventory == null) {
+					sInstance.complain("PayEnd mInventory is null");
+					return;
+				}
+
+				Purchase purchase = sInstance.mInventory.getPurchase(strItemKey);
+				if (purchase != null) {
+					try {
+						sInstance.mHelper.consumeAsync(purchase, sInstance.mConsumeFinishedListener);
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				} else {
+					sInstance.complain("PayEnd " + strItemKey + " purchase not found");
+				}
 			}
 		});
 	}
@@ -218,7 +244,7 @@ public class GooglePlayIABPlugin
     // Callback for when a purchase is finished
     IabHelper.OnIabPurchaseFinishedListener mPurchaseFinishedListener = new IabHelper.OnIabPurchaseFinishedListener() {
         public void onIabPurchaseFinished(IabResult result, Purchase purchase) {
-            Log.d(TAG, "Purchase finished: " + result + ", purchase: " + purchase);
+            Log.d(TAG, "Purchase finished: " + result);// + ", purchase: " + purchase);
 
             // if we were disposed of in the meantime, quit.
             if (mHelper == null) return;
@@ -235,6 +261,10 @@ public class GooglePlayIABPlugin
             }
 
             Log.d(TAG, "Purchase successful.");
+            if (sInstance.mInventory != null) {
+                sInstance.mInventory.addPurchase(purchase);  	
+            }
+
             runNativeOnPurchased(purchase.getOriginalJson(), purchase.getSignature());
         }
     };
@@ -242,7 +272,7 @@ public class GooglePlayIABPlugin
     // Called when consumption is complete
     IabHelper.OnConsumeFinishedListener mConsumeFinishedListener = new IabHelper.OnConsumeFinishedListener() {
         public void onConsumeFinished(Purchase purchase, IabResult result) {
-            Log.d(TAG, "Consumption finished. Purchase: " + purchase + ", result: " + result);
+            Log.d(TAG, "Consumption finished: " + result);// + ", purchase: " + purchase);
 
             // if we were disposed of in the meantime, quit.
             if (mHelper == null) return;

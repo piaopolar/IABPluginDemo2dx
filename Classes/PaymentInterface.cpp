@@ -97,8 +97,6 @@ void GooglePayInAppBilling_OnReceiveItemInfo( const char *pszInfo )
 		return;
 	}
 
-	PaymentMgr::GetInstance()->ClearItemInfo();
-
 	int nSize = Json_getSize(pJsonValue);
 	for (int i = 0; i < nSize; ++i) {
 		PAY_ITEMINFO info;
@@ -143,13 +141,15 @@ void PaymentInterface::ReqItemInfo( const std::vector<std::string>& vecItemTypeI
 #endif
 }
 
-void PaymentInterface::PayStart( const char *pszItemTypeId )
+void PaymentInterface::PayStart( const char *pszItemTypeId, const char *pszExtraVerifyInfo )
 {
 #if (CC_TARGET_PLATFORM == CC_PLATFORM_ANDROID)
 	cocos2d::JniMethodInfo t;
-	if (cocos2d::JniHelper::getStaticMethodInfo(t, GP_IAB_JavaClassName, "PayStart", "(Ljava/lang/String;)V")) {
+	if (cocos2d::JniHelper::getStaticMethodInfo(t, GP_IAB_JavaClassName, "PayStart", "(Ljava/lang/String;Ljava/lang/String;)V")) {
 		jstring jItemTypeId = t.env->NewStringUTF(pszItemTypeId);
-		t.env->CallStaticVoidMethod(t.classID, t.methodID, jItemTypeId);
+		jstring jExtraVerifyInfo = t.env->NewStringUTF(pszExtraVerifyInfo);
+		t.env->CallStaticVoidMethod(t.classID, t.methodID, jItemTypeId, jExtraVerifyInfo);
+		t.env->DeleteLocalRef(jExtraVerifyInfo);
 		t.env->DeleteLocalRef(jItemTypeId);
 		t.env->DeleteLocalRef(t.classID);
 	}

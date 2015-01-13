@@ -35,7 +35,7 @@ PaymentMgr::PaymentMgr()
 
 void PaymentMgr::ReqItemInfo( void )
 {
-	if (!m_vecItem.empty()) {
+	if (!m_mapItem.empty()) {
 		return;
 	}
 
@@ -63,17 +63,31 @@ void PaymentMgr::ReqItemInfo( void )
 
 void PaymentMgr::ClearItemInfo( void )
 {
-	m_vecItem.clear();
+	m_mapItem.clear();
 }
 
 void PaymentMgr::AddItemInfo( const PAY_ITEMINFO& info )
 {
-	m_vecItem.push_back(info);
+	m_mapItem[info.m_strTypeId] = info;
 }
 
-const std::vector<PAY_ITEMINFO>& PaymentMgr::GetItemInfo( void ) const
+const PAY_ITEMINFO* PaymentMgr::GetItemInfo( const char *pszItemTypeId ) const
 {
-	return m_vecItem;
+	if (NULL == pszItemTypeId) {
+		return NULL;
+	}
+
+	auto it = m_mapItem.find(pszItemTypeId);
+	if (it == m_mapItem.end()) {
+		return NULL;
+	}
+
+	return &it->second;
+}
+
+const std::map<std::string, PAY_ITEMINFO>& PaymentMgr::GetItemInfo( void ) const
+{
+	return m_mapItem;
 }
 
 bool PaymentMgr::TestVerifyMode( int nMode )
@@ -83,7 +97,7 @@ bool PaymentMgr::TestVerifyMode( int nMode )
 
 void PaymentMgr::OnRestore( const char *pszItemKey, const char *pszItemInfo, const char *pszVerifyInfo )
 {
-	CCLog("PaymentMgr::OnRestore [%s] [%s]", pszItemKey, pszVerifyInfo);
+	CCLOG("PaymentMgr::OnRestore [%s] [%s]", pszItemKey, pszVerifyInfo);
 
 	if (this->TestVerifyMode(PAY_VERIFY_SERVER)) {
 		this->PayServerVerify(pszItemKey, pszVerifyInfo);
@@ -94,14 +108,16 @@ void PaymentMgr::OnRestore( const char *pszItemKey, const char *pszItemInfo, con
 
 void PaymentMgr::PayStart( const char *pszItemTypeId )
 {
-	CCLog("PaymentMgr::PayStart [%s]", pszItemTypeId);
+	CCLOG("PaymentMgr::PayStart [%s]", pszItemTypeId);
 
-	PaymentInterface::PayStart(pszItemTypeId);
+	// some info for game server or client to verify
+	const char* pszVerifyInfo = "piao.polar@gmail.com";
+	PaymentInterface::PayStart(pszItemTypeId, pszVerifyInfo);
 }
 
 void PaymentMgr::OnPurchased( const char *pszItemKey, const char *pszItemInfo, const char *pszVerifyInfo )
 {
-	CCLog("PaymentMgr::OnPurchased [%s] [%s]", pszItemKey, pszVerifyInfo);
+	CCLOG("PaymentMgr::OnPurchased [%s] [%s]", pszItemKey, pszVerifyInfo);
 
 	if (this->TestVerifyMode(PAY_VERIFY_SERVER)) {
 		this->PayServerVerify(pszItemKey, pszVerifyInfo);
@@ -112,14 +128,14 @@ void PaymentMgr::OnPurchased( const char *pszItemKey, const char *pszItemInfo, c
 
 void PaymentMgr::OnFailed( const char* pszItemKey, const char *pszInfo )
 {
-	CCLog("PaymentMgr::OnFailed [%s] [%s]", pszItemKey, pszInfo);
+	CCLOG("PaymentMgr::OnFailed [%s] [%s]", pszItemKey, pszInfo);
 
 	this->PayEnd(pszItemKey);
 }
 
 void PaymentMgr::PayServerVerify( const char* pszItemKey, const char *pszVerifyInfo )
 {
-	CCLog("PaymentMgr::PayServerVerify [%s] [%s]", pszItemKey, pszVerifyInfo);
+	CCLOG("PaymentMgr::PayServerVerify [%s] [%s]", pszItemKey, pszVerifyInfo);
 
 	// TODO: 
 	//   Send msg to game server to verify, and call OnServerVerifyResult when recv response.
@@ -129,7 +145,7 @@ void PaymentMgr::PayServerVerify( const char* pszItemKey, const char *pszVerifyI
 
 void PaymentMgr::OnServerVerifyResult( const char *pszItemKey, bool bVerifyFin )
 {
-	CCLog("PaymentMgr::OnServerVerifyResult [%s] [%s]", pszItemKey, bVerifyFin ? "true" : "false");
+	CCLOG("PaymentMgr::OnServerVerifyResult [%s] [%s]", pszItemKey, bVerifyFin ? "true" : "false");
 
 	if (bVerifyFin) {
 		this->PayEnd(pszItemKey);
@@ -138,7 +154,7 @@ void PaymentMgr::OnServerVerifyResult( const char *pszItemKey, bool bVerifyFin )
 
 void PaymentMgr::PayEnd( const char *pszItemKey )
 {
-	CCLog("PaymentMgr::PayEnd [%s]", pszItemKey);
+	CCLOG("PaymentMgr::PayEnd [%s]", pszItemKey);
 
 	// if it a non-consumable like item and ONLY save owned status in google IAB, DONOT call it
 	PaymentInterface::PayEnd(pszItemKey);

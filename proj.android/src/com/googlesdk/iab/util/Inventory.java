@@ -28,7 +28,7 @@ public class Inventory {
     public Map<String,SkuDetails> mSkuMap = new HashMap<String,SkuDetails>();
     public Map<String,Purchase> mPurchaseMap = new HashMap<String,Purchase>();
 
-    Inventory() { }
+    public Inventory() { }
 
     /** Returns the listing details for an in-app product. */
     public SkuDetails getSkuDetails(String sku) {
@@ -85,7 +85,7 @@ public class Inventory {
         mSkuMap.put(d.getSku(), d);
     }
 
-    void addPurchase(Purchase p) {
+    public void addPurchase(Purchase p) {
         mPurchaseMap.put(p.getSku(), p);
     }
 }
