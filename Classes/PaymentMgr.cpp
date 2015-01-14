@@ -18,6 +18,7 @@ PaymentMgr * PaymentMgr::GetInstance( void )
 {
 	if (NULL == s_pInstance) {
 		s_pInstance = new PaymentMgr;
+		PaymentInterface::Init();
 	}
 
 	return s_pInstance;

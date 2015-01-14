@@ -28,6 +28,7 @@ struct PAY_ITEMINFO
 	std::string m_strKey;
 	std::string m_strTypeId;
 	std::string m_strName;
+	std::string m_strDesc;
 	std::string m_strPrice;
 };
 

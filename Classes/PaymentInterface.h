@@ -14,6 +14,7 @@
 class PaymentInterface
 {
 public:
+	static void Init(void);
 	static void ReqItemInfo(const std::vector<std::string>& vecItemTypeId);
 
 	static void PayStart(const char *pszItemTypeId, const char *pszExtraVerifyInfo);
