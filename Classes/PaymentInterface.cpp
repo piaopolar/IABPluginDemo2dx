@@ -104,6 +104,7 @@ void GooglePayInAppBilling_OnReceiveItemInfo( const char *pszInfo )
 		auto* pJsonEach = Json_getItemAt(pJsonValue, i);
 		info.m_strTypeId = Json_getString(pJsonEach, "productId", "");
 		info.m_strName = Json_getString(pJsonEach, "title", "");
+		info.m_strDesc = Json_getString(pJsonEach, "description", "");
 
 		auto pos = info.m_strName.find_last_of(' ');
 		if (std::string::npos != pos) {
@@ -117,6 +118,11 @@ void GooglePayInAppBilling_OnReceiveItemInfo( const char *pszInfo )
 
 	Json_dispose(pJsonValue);
 	PaymentMgr::GetInstance()->NotifyObserver(PAY_EVENT_QUERY_SKU_FIN);
+}
+
+void PaymentInterface::Init(void)
+{
+
 }
 
 void PaymentInterface::ReqItemInfo( const std::vector<std::string>& vecItemTypeId )
